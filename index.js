@@ -27,6 +27,21 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const classCollection= client.db('skillTrackDb').collection('classes')
+    // save classes in the mongoDb with post
+    app.post('/class',async(req,res)=>{
+      const classData=req.body
+      const result= await classCollection.insertOne(classData)
+      res.send(result)
+    })
+    // get all classes for teacher
+    app.get('/my-classes/:email',async(req,res)=>{
+      const email= req.params.email
+      const query= {'teacher.email':email}
+      console.log(query)
+      const result= await classCollection.find(query).toArray()
+      res.send(result)
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
