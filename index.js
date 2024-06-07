@@ -29,6 +29,7 @@ async function run() {
     await client.connect();
     const classCollection= client.db('skillTrackDb').collection('classes')
     const userCollection= client.db('skillTrackDb').collection('users')
+    const teacherCollection= client.db('skillTrackDb').collection('teachers')
     // save classes in the mongoDb 
     app.post('/class',async(req,res)=>{
       const classData=req.body
@@ -74,6 +75,13 @@ async function run() {
     // get all users from mongoDb
     app.get('/users',async(req,res)=>{
       const result= await userCollection.find().toArray()
+      res.send(result)
+    })
+
+    // save user as teacher in db
+    app.post('/teachers',async(req,res)=>{
+      const teacherData= req.body
+      const result =await teacherCollection.insertOne(teacherData)
       res.send(result)
     })
     
