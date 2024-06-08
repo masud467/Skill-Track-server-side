@@ -59,7 +59,18 @@ async function run() {
       const query ={email:user?.email}
       // if user already exist in mongoDb
       const isUserExist= await userCollection.findOne(query)
-      if(isUserExist) return res.send(isUserExist)
+      if(isUserExist){
+        if(user.status==='Requested'){
+          const result = await userCollection.updateOne(query,{
+            $set:{status:user?.status}
+          })
+          return res.send(result)
+        }else{
+          return res.send(isUserExist)
+        }
+  
+      }
+      // if(isUserExist) return res.send(isUserExist)
       // save new user
       const options = {upsert:true}
       const updateDoc={
