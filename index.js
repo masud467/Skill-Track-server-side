@@ -68,9 +68,7 @@ async function run() {
         }else{
           return res.send(isUserExist)
         }
-  
       }
-      // if(isUserExist) return res.send(isUserExist)
       // save new user
       const options = {upsert:true}
       const updateDoc={
@@ -83,9 +81,28 @@ async function run() {
       res.send(result)
     })
 
+    // get a user by email from mongoDb
+    app.get('/user/:email',async(req,res)=>{
+      const email=req.params.email
+      const result =await userCollection.findOne({email})
+      res.send(result)
+    })
+
+
     // get all users from mongoDb
     app.get('/users',async(req,res)=>{
       const result= await userCollection.find().toArray()
+      res.send(result)
+    })
+    // update user role
+    app.patch('/user/update/:email',async(req,res)=>{
+      const email = req.params.email
+      const user= req.body
+      const query= {email}
+      const updateDoc={
+        $set:{...user,createTime:Date.now()}
+      }
+      const result =await userCollection.updateOne(query,updateDoc)
       res.send(result)
     })
 
