@@ -73,6 +73,20 @@ async function run() {
         return res.status(401).send({ message: 'unauthorized access!!' })
 
       next()
+    } 
+
+    // verify teacher middleware
+    const verifyTeacher = async (req, res, next) => {
+      console.log('hit for the admin ')
+      const user = req.user
+      const query = { email: user?.email }
+      const result = await userCollection.findOne(query)
+      console.log('user role' ,result?.role)
+      if (!result || result?.role !== 'teacher'){
+        return res.status(401).send({ message: 'unauthorized access!!' })
+      }
+
+      next()
     }
 
     // auth related api OR creating Token
@@ -106,13 +120,13 @@ async function run() {
       }
     })
     // save classes in the mongoDb 
-    app.post('/class',async(req,res)=>{
+    app.post('/class', verifyToken,verifyTeacher,async(req,res)=>{
       const classData=req.body
       const result= await classCollection.insertOne(classData)
       res.send(result)
     })
     // get all classes for teacher
-    app.get('/my-classes/:email',async(req,res)=>{
+    app.get('/my-classes/:email',verifyToken,verifyTeacher,async(req,res)=>{
       const email= req.params.email
       const query= {'teacher.email':email}
       // console.log(query)
@@ -121,7 +135,7 @@ async function run() {
     })
 
     // delete room from db with _id
-    app.delete('/my-classes/:id',async(req,res)=>{
+    app.delete('/my-classes/:id',verifyToken,verifyTeacher,async(req,res)=>{
       const id = req.params.id
       const query ={_id:new ObjectId(id)}
       const result = await classCollection.deleteOne(query)
