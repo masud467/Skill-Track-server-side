@@ -1,12 +1,15 @@
 const express = require('express');
 const app=express()
 require('dotenv').config()
+const jwt= require ('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const cors = require('cors');
 const port= process.env.PORT||6003
 
 // middleware
 app.use(cors())
 app.use(express.json())
+app.use(cookieParser())
 
 
 
