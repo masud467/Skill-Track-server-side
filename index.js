@@ -125,6 +125,39 @@ async function run() {
       const result= await classCollection.insertOne(classData)
       res.send(result)
     })
+
+    //  get all classes
+    app.get('/allClass',async(req,res)=>{
+      const result = await classCollection.find().toArray()
+      res.send(result)
+    })
+
+     // update teacher class
+
+     app.patch('/class/update/:id', async (req, res) => {
+      const { id } = req.params;
+      const updateData = req.body;
+      try {
+        const result = await classCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData }
+        );
+        res.send(result);
+      } catch (error) {
+        console.error('Error updating class', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+    //  app.patch('/class/update/:id',async(req,res)=>{
+    //   const id = req.params.id
+    //   const updateData = req.body;
+    //   const query= {_id:new ObjectId(id)}
+    //   const updateDoc={
+    //     $set:{updateData,createTime:Date.now()}
+    //   }
+    //   const result =await userCollection.updateOne(query,updateDoc)
+    //   res.send(result)
+    // })
     // get all classes for teacher
     app.get('/my-classes/:email',verifyToken,verifyTeacher,async(req,res)=>{
       const email= req.params.email
@@ -143,30 +176,40 @@ async function run() {
     })
 
     // save one user information in mongoDb
-    app.put('/user',async(req,res)=>{
-      const user = req.body 
-      const query ={email:user?.email}
-      // if user already exist in mongoDb
-      const isUserExist= await userCollection.findOne(query)
-      if(isUserExist){
-        if(user.status==='Requested'){
-          const result = await userCollection.updateOne(query,{
-            $set:{status:user?.status}
+
+    app.put('/user', async (req, res) => {
+      const user = req.body
+      const query = { email: user?.email }
+      // check if user already exists in db
+      const isExist = await userCollection.findOne(query)
+      if (isExist) {
+        if (user.status === 'Requested') {
+          // if existing user try to change his role
+          const result = await userCollection.updateOne(query, {
+            $set: { 
+              status:user?.status,
+               experience: user?.experience,
+            title: user?.title,
+            category: user?.category,
+            image: user?.image,
+          name: user?.name,
+             },
           })
           return res.send(result)
-        }else{
-          return res.send(isUserExist)
+        } else {
+          // if existing user login again
+          return res.send(isExist)
         }
       }
-      // save new user
-      const options = {upsert:true}
-      const updateDoc={
-        $set:{
+      // save user for the first time
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: {
           ...user,
-          createTime:Date.now()
-        }
+          timestamp: Date.now(),
+        },
       }
-      const result = await userCollection.updateOne(query,updateDoc,options)
+      const result = await userCollection.updateOne(query, updateDoc, options)
       res.send(result)
     })
 
@@ -183,6 +226,19 @@ async function run() {
       const result= await userCollection.find().toArray()
       res.send(result)
     })
+
+    app.get('/user', verifyToken,verifyAdmin, async (req, res) => {
+      try {
+        // const users = await userCollection.find({ status: 'Requested' }).toArray();
+        const users = await userCollection.find({
+          status: { $in: ['requested', 'accepted', 'rejected'] }
+        }).toArray();
+        res.send(users);
+      } catch (err) {
+        console.error('Error fetching users', err);
+        res.status(500).send('Internal Server Error');
+      }
+    });
     // update user role
     app.patch('/user/update/:email',async(req,res)=>{
       const email = req.params.email
@@ -201,6 +257,12 @@ async function run() {
       const result =await teacherCollection.insertOne(teacherData)
       res.send(result)
     })
+
+    // get all teacher's classes from db
+    // app.get('/teachers',async(req,res)=>{
+    //   const result = await teacherCollection.find().toArray()
+    //   res.send(result)
+    // })
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
