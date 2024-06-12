@@ -131,6 +131,13 @@ async function run() {
       const result = await classCollection.find().toArray()
       res.send(result)
     })
+    //  get a class by id
+    app.get('/allClass/:id',async(req,res)=>{
+      const id= req.params.id
+      const query= {_id:new ObjectId(id)}
+      const result = await classCollection.findOne(query)
+      res.send(result)
+    })
 
      // update teacher class
 
