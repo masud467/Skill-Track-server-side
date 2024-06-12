@@ -148,16 +148,7 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
-    //  app.patch('/class/update/:id',async(req,res)=>{
-    //   const id = req.params.id
-    //   const updateData = req.body;
-    //   const query= {_id:new ObjectId(id)}
-    //   const updateDoc={
-    //     $set:{updateData,createTime:Date.now()}
-    //   }
-    //   const result =await userCollection.updateOne(query,updateDoc)
-    //   res.send(result)
-    // })
+    
     // get all classes for teacher
     app.get('/my-classes/:email',verifyToken,verifyTeacher,async(req,res)=>{
       const email= req.params.email
@@ -252,17 +243,13 @@ async function run() {
     })
 
     // save user as teacher in db
-    app.post('/teachers',async(req,res)=>{
-      const teacherData= req.body
-      const result =await teacherCollection.insertOne(teacherData)
-      res.send(result)
-    })
-
-    // get all teacher's classes from db
-    // app.get('/teachers',async(req,res)=>{
-    //   const result = await teacherCollection.find().toArray()
+    // app.post('/teachers',async(req,res)=>{
+    //   const teacherData= req.body
+    //   const result =await teacherCollection.insertOne(teacherData)
     //   res.send(result)
     // })
+
+    
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
