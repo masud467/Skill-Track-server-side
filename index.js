@@ -3,7 +3,7 @@ const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+// const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
 const port = process.env.PORT || 6003;
 
@@ -24,19 +24,24 @@ app.use(cookieParser());
 
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies?.token;
-  console.log(token);
-  if (!token) {
-    return res.status(401).send({ message: "unauthorized access" });
-  }
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
-      console.log(err);
+  try {
+    const token = req.cookies?.token;
+    console.log(token);
+    if (!token) {
       return res.status(401).send({ message: "unauthorized access" });
     }
-    req.user = decoded;
-    next();
-  });
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(err);
+        return res.status(403).send({ message: "Forbidden" });
+      }
+      req.user = decoded;
+      next();
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "Internal Server Error" });
+  }
 };
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -119,9 +124,14 @@ async function run() {
     });
     // save classes in the mongoDb
     app.post("/class", verifyToken, verifyTeacher, async (req, res) => {
-      const classData = req.body;
-      const result = await classCollection.insertOne(classData);
-      res.send(result);
+      try {
+        const classData = req.body;
+        const result = await classCollection.insertOne(classData);
+        res.send(result);
+      } catch (error) {
+        console.error("Error saving class data:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
     });
 
     //  get all classes
