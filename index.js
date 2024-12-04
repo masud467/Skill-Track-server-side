@@ -3,7 +3,7 @@ const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-// const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
 const port = process.env.PORT || 6003;
 
@@ -63,6 +63,7 @@ async function run() {
     const classCollection = client.db("skillTrackDb").collection("classes");
     const userCollection = client.db("skillTrackDb").collection("users");
     const reviewCollection = client.db("skillTrackDb").collection("reviews");
+    const paymentCollection = client.db("skillTrackDb").collection("payments");
     // const teacherCollection= client.db('skillTrackDb').collection('teachers')
 
     // verify admin middleware
@@ -284,30 +285,32 @@ async function run() {
 
     // payment intent
 
-    // app.post('/create-payment-intent',async(req,res)=>{
-    //   const {price} = req.body
-    //   const amount = parseInt(price*100)
-    //   const paymentIntent= await stripe.paymentIntents.create({
-    //     amount:amount,
-    //     currency:'usd',
-    //     payment_method_types:['card']
-    //   })
-    //   res.send({
-    //     clientSecret:paymentIntent.client_secret
-    //   })
-    // })
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
-    // app.post('/payment',async(req,res)=>{
-    //   const payment=req.body;
-    //   const paymentResult= await paymentCollection.insertOne(payment);
-    //   console.log('payment info',payment);
+    app.post("/payment", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      console.log("payment info", payment);
 
-    //   const query ={_id: {
-    //     $in: payment.cartIds.map(id => new ObjectId(id))
-    //   }};
-    //   const deletedResult= await cartCollection.deleteMany(query)
-    //   res.send({paymentResult,deletedResult})
-    // })
+      const query = {
+        _id: {
+          $in: payment.cartIds.map((id) => new ObjectId(id)),
+        },
+      };
+      const deletedResult = await cartCollection.deleteMany(query);
+      res.send({ paymentResult, deletedResult });
+    });
 
     // client review related api
     app.get("/review", async (req, res) => {
